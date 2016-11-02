@@ -9,4 +9,5 @@ install APK on your android phone and control
 ##how to expand
 
 buy your own module on TaoBao and write driver program on RPI
-# Author: SongMengKe WangKun
+### Author
+SongMengKe && WangKun
