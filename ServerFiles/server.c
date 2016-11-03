@@ -12,6 +12,8 @@
 #define BUFFER_SIZE     1024
 int total_clients=0;
 char buffer[BUFFER_SIZE] = "welcome string";
+char last_buffer[BUFFER_SIZE];
+char total_buffer[BUFFER_SIZE];
 void accept_cellphone_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
 //void accept_rpi_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
 void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
@@ -113,8 +115,10 @@ void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		else {
 				buffer[read] = '\0';
 				printf("get the message: %s\n",buffer);
+        strcpy(last_buffer,buffer);
 		}
-    send_num = send(watcher->fd, buffer,BUFFER_SIZE, 0);
+    strcat(total_buffer,last_buffer);
+    send_num = send(watcher->fd, total_buffer,BUFFER_SIZE, 0);
 		if( send_num == 0 ) {
 				ev_io_stop(loop,watcher);
 				perror("peer might closing");
@@ -123,8 +127,8 @@ void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 				return;
 		}
 		else {
-				buffer[send_num] = '\0';
-				printf("send the message: %s\n",buffer);
+				total_buffer[send_num] = '\0';
+				printf("send the message: %s\n",total_buffer);
 		}
 }
 //void send_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
