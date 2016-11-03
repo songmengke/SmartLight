@@ -11,11 +11,11 @@
 #define PORT_CELLPHONE  8888
 #define BUFFER_SIZE     1024
 int total_clients=0;
-char buffer[BUFFER_SIZE];
+char buffer[BUFFER_SIZE] = "welcome string";
 void accept_cellphone_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
-void accept_rpi_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
+//void accept_rpi_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
 void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
-void send_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
+//void send_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
 int main()
 {
 		int cellphone_sd;
@@ -56,25 +56,7 @@ void accept_cellphone_cb(struct ev_loop *loop, struct ev_io *watcher, int revent
 {
 		//struct sockaddr_in client_addr;
 		int client_sd;
-    int rpi_sd;
-		struct sockaddr_in rpi_addr;
 		struct ev_io *w_client = (struct ev_io*)malloc(sizeof(struct ev_io));
-		struct ev_io *rpi_accept = (struct ev_io*)malloc(sizeof(struct ev_io));
-		if((rpi_sd=socket(AF_INET, SOCK_STREAM, 0))<0) {
-				printf("socket error");
-				exit(0);
-		}
-		bzero(&rpi_addr, sizeof(rpi_addr));
-		rpi_addr.sin_family = AF_INET;
-		rpi_addr.sin_port = htons(PORT_RPI);
-		rpi_addr.sin_addr.s_addr = INADDR_ANY;
-		if(bind(rpi_sd,(struct sockaddr*)&rpi_addr, sizeof(rpi_addr))!=0) {
-				printf("bind error");
-		}
-		if(listen(rpi_sd, 0) < 0) {
-				printf("listen error");
-				return exit(0);
-		}
 		if(EV_ERROR & revents) {
 				printf("error event in accept");
 				return ;
@@ -89,34 +71,33 @@ void accept_cellphone_cb(struct ev_loop *loop, struct ev_io *watcher, int revent
 		printf("successfully connected with client.\n");
 		printf("%d client connected .\n", total_clients);
 		ev_io_init(w_client,read_cb, client_sd, EV_READ);
-		ev_io_init(rpi_accept, accept_rpi_cb, rpi_sd, EV_READ);
-		ev_io_start(loop,w_client);
-		ev_io_start(loop,rpi_accept);
-}
-void accept_rpi_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
-{
-		//struct sockaddr_in client_addr;
-		int client_sd;
-		struct ev_io *w_client = (struct ev_io*)malloc(sizeof(struct ev_io));
-		if(EV_ERROR & revents) {
-				printf("error event in accept");
-				return ;
-		}
-		//client_sd=accept(watcher->fd,(struct sockaddr *)&client_addr,&client_len);
-		client_sd = accept(watcher->fd, NULL, NULL);
-		if(client_sd<0) {
-				printf("accept error");
-				return;
-		}
-		total_clients++;
-		printf("successfully connected with client.\n");
-		printf("%d client connected .\n", total_clients);
-		ev_io_init(w_client,send_cb, client_sd, EV_WRITE);
 		ev_io_start(loop,w_client);
 }
+//void accept_rpi_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
+//{
+//		//struct sockaddr_in client_addr;
+//		int client_sd;
+//		struct ev_io *w_client = (struct ev_io*)malloc(sizeof(struct ev_io));
+//		if(EV_ERROR & revents) {
+//				printf("error event in accept");
+//				return ;
+//		}
+//		//client_sd=accept(watcher->fd,(struct sockaddr *)&client_addr,&client_len);
+//		client_sd = accept(watcher->fd, NULL, NULL);
+//		if(client_sd<0) {
+//				printf("accept error");
+//				return;
+//		}
+//		total_clients++;
+//		printf("successfully connected with client.\n");
+//		printf("%d client connected .\n", total_clients);
+//		ev_io_init(w_client,send_cb, client_sd, EV_WRITE);
+//		ev_io_start(loop,w_client);
+//}
 void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 {
 		int read;
+    int send_num;
 		if(EV_ERROR & revents) {
 				printf("error event in read");
 				return;
@@ -133,28 +114,40 @@ void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 				buffer[read] = '\0';
 				printf("get the message: %s\n",buffer);
 		}
+    send_num = send(watcher->fd, buffer,BUFFER_SIZE, 0);
+		if( send_num == 0 ) {
+				ev_io_stop(loop,watcher);
+				perror("peer might closing");
+				total_clients--;
+				printf("%d client connected .\n",total_clients);
+				return;
+		}
+		else {
+				buffer[send_num] = '\0';
+				printf("send the message: %s\n",buffer);
+		}
 }
-void send_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
-{
-	int send_num;
-  if(EV_ERROR & revents) {
-      printf("error event in send");
-      return;
-  }
-
-  if(strlen(buffer)!=0) {
-      send_num = send(watcher->fd, buffer, BUFFER_SIZE, 0);
-  }
-
-	if( send_num == 0 ) {
-			ev_io_stop(loop,watcher);
-			perror("peer might closing");
-			total_clients--;
-			printf("%d client connected .\n",total_clients);
-			return;
-	}
-	else {
-			buffer[send_num] = '\0';
-			printf("send the message: %s\n",buffer);
-	}
-}
+//void send_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
+//{
+//	int send_num;
+//  if(EV_ERROR & revents) {
+//      printf("error event in send");
+//      return;
+//  }
+//
+//  if(strlen(buffer)!=0) {
+//      send_num = send(watcher->fd, buffer, BUFFER_SIZE, 0);
+//  }
+//
+//	if( send_num == 0 ) {
+//			ev_io_stop(loop,watcher);
+//			perror("peer might closing");
+//			total_clients--;
+//			printf("%d client connected .\n",total_clients);
+//			return;
+//	}
+//	else {
+//			buffer[send_num] = '\0';
+//			printf("send the message: %s\n",buffer);
+//	}
+//}
