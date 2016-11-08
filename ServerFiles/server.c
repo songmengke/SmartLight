@@ -100,6 +100,8 @@ void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 {
 		int read;
     int send_num;
+    int i=0;
+    int j=0;
 		if(EV_ERROR & revents) {
 				printf("error event in read");
 				return;
@@ -115,10 +117,17 @@ void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		else {
 				buffer[read] = '\0';
 				printf("get the message: %s\n",buffer);
-        strcpy(last_buffer,buffer);
+        read = strlen(buffer);
+        strcat(total_buffer,buffer);
+        while(total_buffer[i] != '\0') {
+            i++;
+        }
+        for(j=0;j<i-read;j++) {
+            last_buffer[j] = total_buffer[j];
+        }
+        last_buffer[i]='\0';
 		}
-    strcat(total_buffer,last_buffer);
-    send_num = send(watcher->fd, total_buffer,BUFFER_SIZE, 0);
+    send_num = send(watcher->fd, last_buffer,i, 0);
 		if( send_num == 0 ) {
 				ev_io_stop(loop,watcher);
 				perror("peer might closing");
@@ -128,7 +137,7 @@ void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		}
 		else {
 				total_buffer[send_num] = '\0';
-				printf("send the message: %s\n",total_buffer);
+				printf("send the message: %s %d\n",last_buffer,read);
 		}
 }
 //void send_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
