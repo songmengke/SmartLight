@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">SmartLight</string>
+    <string name="cannot_open_and_close">开（关）灯失败，请检查网络。</string>
+    <string name="cannot_connect_the_network">连网失败，请检查网络连接。</string>
 </resources>
