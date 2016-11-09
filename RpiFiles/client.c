@@ -47,8 +47,10 @@ void send_cb(struct ev_loop *loop, struct ev_io *watcher, int revent)
         printf("error event in read");
         return;
     }
-    printf("please input message : \n");
-    scanf("%s",buffer);
+    //printf("please input message : \n");
+    //scanf("%s",buffer);
+    strcpy(buffer,"\0");
+    system("sleep 1");
     send_num = send(watcher->fd, buffer, BUFFER_SIZE, 0);
     if(send_num == 0) {
         ev_io_stop(loop,watcher);
@@ -66,13 +68,13 @@ void send_cb(struct ev_loop *loop, struct ev_io *watcher, int revent)
         perror("peer might closing");
         return;
     } else {
-        int i;
+        int i =0;
+        char signal[10];
         buffer[read] = '\0';
-        read = (int)strlen(buffer);
-        printf("get message :");
-        for(i=0;i<read-send_num;i++){
-            printf("%c",buffer[i]);
+        for(i=0;i<4;i++) {
+           signal[i]=buffer[i];
         }
-        printf("\n");
+        signal[4]='\0';
+        printf("get message :%s\n",signal);
     }
 }
